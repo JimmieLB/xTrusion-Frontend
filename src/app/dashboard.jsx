@@ -12,12 +12,19 @@ function DashBoard() {
     const [imageType, setImageType] = useState('jpeg');
     const [mesh, setMesh] = useState(null);
 
+    const controlsRef = useRef(null);
+
     function handleImageChange(event) {
         let file = event.target.files[0];
         if (file) {
             setImage(file)
             setImageType(file.type)
         }
+    }
+
+    function updateCamera(center) {
+        controlsRef.current.target.copy(center);
+        controlsRef.current.position = new THREE.Vector3(0,0,50)
     }
 
     function handleClick(event) {
@@ -29,27 +36,20 @@ function DashBoard() {
             body: formData
         }
 
-        console.log(image)
-        console.log(imageType)
-
         fetch("http://127.0.0.1:5000/meshtest", requestOptions)
             .then((response) => {
                 return response.text()
             })
             .then((response) => {
                 response = JSON.parse(response)
-                console.log(response)
                 let faces = response['faces'].flat()
                 let vertices = new Float32Array(response['vertices'].flat())
-
-                
-
 
                 const geometry = new THREE.BufferGeometry();
                 geometry.setIndex(faces);
                 geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                
                 geometry.computeVertexNormals();
+
                 setMesh(geometry)
             }).catch((e) => {
                 console.error(e)
@@ -61,12 +61,12 @@ function DashBoard() {
         <div className='w-screen h-screen max-w-full max-h-full overflow-hidden'>
 
             <Canvas>
-                <ambientLight intensity={Math.PI / 2} />
+                <ambientLight intensity={Math.PI / 4} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
                 <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
-                <CustomMesh geo={mesh}/>
+                <CustomMesh geo={mesh} updateCamera={updateCamera}/>
                 {/* <Stats/> */}
-                <OrbitControls/>
+                <OrbitControls ref={controlsRef}/>
             </Canvas>
         </div>
             <div className="fixed top-32 left-8">
